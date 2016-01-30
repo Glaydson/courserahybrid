@@ -4,3 +4,7 @@
 node_modules/
 platforms/
 plugins/
+hooks/
+ionic-app-base-master/
+scss/
+
