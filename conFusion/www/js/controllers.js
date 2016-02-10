@@ -11,7 +11,7 @@ angular.module('conFusion.controllers', [])
 
   // Form data for the login modal
   $scope.loginData = {};
-  $scope.reservation = {}
+  $scope.reservation = {};
 
   // Create the login modal that we will use later
   $ionicModal.fromTemplateUrl('templates/login.html', {
@@ -68,6 +68,8 @@ angular.module('conFusion.controllers', [])
         $scope.closeReserve();
       }, 1000);
     };
+
+
 
   })
 
@@ -155,12 +157,14 @@ angular.module('conFusion.controllers', [])
     };
   }])
 
-  .controller('DishDetailController', ['$scope', '$stateParams', 'menuFactory', 'baseURL', function($scope, $stateParams, menuFactory, baseURL) {
+  .controller('DishDetailController', ['$scope', '$stateParams', 'menuFactory', 'favoriteFactory', 'baseURL', '$ionicPopover', '$ionicModal',
+    function($scope, $stateParams, menuFactory, favoriteFactory, baseURL, $ionicPopover, $ionicModal) {
 
     $scope.baseURL = baseURL;
     $scope.dish = {};
     $scope.showDish = false;
     $scope.message="Loading ...";
+    $scope.mycomment = {rating:5, comment:"", author:"", date:""};
 
     $scope.dish = menuFactory.getDishes().get({id:parseInt($stateParams.id,10)})
       .$promise.then(
@@ -172,6 +176,53 @@ angular.module('conFusion.controllers', [])
         $scope.message = "Error: "+response.status + " " + response.statusText;
       }
     );
+
+    $ionicPopover.fromTemplateUrl('templates/dish-detail-popover.html', {
+      scope: $scope
+    }).then(function(popover) {
+      $scope.popover = popover;
+    });
+
+
+    $scope.openPopover = function($event) {
+      $scope.popover.show($event);
+    };
+
+    $scope.addToFavorites = function() {
+      favoriteFactory.addToFavorites($scope.dish.id);
+      $scope.popover.hide();
+    };
+
+    // Create the comment modal that we will use later
+    $ionicModal.fromTemplateUrl('templates/dish-comment.html', {
+      scope: $scope
+    }).then(function(modal) {
+      $scope.commentForm = modal;
+    });
+
+    // Triggered in the comment modal to close it
+    $scope.closeComment = function() {
+      $scope.commentForm.hide();
+    };
+
+    // Open the comment modal
+    $scope.comment = function() {
+      $scope.commentForm.show();
+      $scope.popover.hide();
+    };
+
+    $scope.addComment = function(form) {
+      $scope.mycomment.date = new Date().toISOString();
+      console.log($scope.mycomment);
+
+      $scope.dish.comments.push($scope.mycomment);
+      menuFactory.getDishes().update({id:$scope.dish.id},$scope.dish);
+
+      form.$setPristine();
+
+      $scope.mycomment = {rating:5, comment:"", author:"", date:""};  // Not working
+      $scope.closeComment();
+    };
 
 
   }])
